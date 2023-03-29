@@ -6,12 +6,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- *
- * This is just a demo for you, please run it on JDK17 (some statements may be not allowed in lower version).
- * This is just a demo, and you can extend and implement functions
- * based on this demo, or implement it in a different way.
- */
+
 public class OnlineCoursesAnalyzer {
 
     List<Course> courses = new ArrayList<>();
@@ -71,11 +66,11 @@ public class OnlineCoursesAnalyzer {
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
         Map<String, List<List<String>>> map = new HashMap<>();
         for(Course course:courses){
-            String courseName=course.getTitle();
-            String names=course.getInstructors();
-            List<String> instructorList=new ArrayList<>(List.of(names.split(",")));
+            String courseName = course.getTitle();
+            String names = course.getInstructors();
+            List<String> instructorList = new ArrayList<>(List.of(names.split(", ")));
             if(instructorList.size()==1){
-                List<List<String>> currentCourse=map.getOrDefault(instructorList.get(0), new ArrayList<>());
+                List<List<String>> currentCourse = map.getOrDefault(instructorList.get(0), new ArrayList<>());
                 if(currentCourse.size()==0) {
                     currentCourse.add(new ArrayList<>());
                     currentCourse.add(new ArrayList<>());
@@ -83,13 +78,12 @@ public class OnlineCoursesAnalyzer {
                     currentCourse.add(new ArrayList<>());
                 }
                 currentCourse.get(0).add(courseName);
-                List<String> distinctCurrentCourse= new ArrayList<>(currentCourse.get(0).stream().distinct().toList());
-                Collections.sort(distinctCurrentCourse);
+                List<String> distinctCurrentCourse = new ArrayList<>(currentCourse.get(0).stream().distinct().toList());
                 currentCourse.set(0,distinctCurrentCourse);
                 map.put(instructorList.get(0),currentCourse);
             }else{
                 for(String coInstructor:instructorList){
-                    List<List<String>> currentCourse=map.getOrDefault(coInstructor, new ArrayList<>());
+                    List<List<String>> currentCourse = map.getOrDefault(coInstructor, new ArrayList<>());
                     if(currentCourse.size()==0) {
                         currentCourse.add(new ArrayList<>());
                         currentCourse.add(new ArrayList<>());
@@ -97,29 +91,77 @@ public class OnlineCoursesAnalyzer {
                         currentCourse.add(new ArrayList<>());
                     }
                     currentCourse.get(1).add(courseName);
-                    List<String> distinctCurrentCourse= new ArrayList<>(currentCourse.get(1).stream().distinct().toList());
-                    Collections.sort(distinctCurrentCourse);
+                    List<String> distinctCurrentCourse = new ArrayList<>(currentCourse.get(1).stream().distinct().toList());
                     currentCourse.set(1,distinctCurrentCourse);
                     map.put(coInstructor,currentCourse);
                 }
             }
         }
+        map.forEach((k, v) -> v.forEach(Collections::sort));
         return map;
     }
 
     //4
     public List<String> getCourses(int topK, String by) {
-        return null;
+        List<Course>courseList = new ArrayList<>(courses);
+        if (by.equals("hours")) {
+            courseList.sort(Comparator.comparing(Course::getTotalHours).reversed().thenComparing(Course::getTitle));
+        } else{
+            courseList.sort(Comparator.comparing(Course::getParticipants).reversed().thenComparing(Course::getTitle));
+        }
+        List<String> topKCourses = new ArrayList<>();
+        for(Course course:courseList){
+            if(!topKCourses.contains(course.getTitle())){
+                topKCourses.add(course.getTitle());
+                if(topKCourses.size()==topK){
+                    break;
+                }
+            }
+        }
+        return topKCourses;
     }
 
     //5
     public List<String> searchCourses(String courseSubject, double percentAudited, double totalCourseHours) {
-        return null;
+        List<String>courseList = new ArrayList<>();
+        for (Course course:courses) {
+            if (course.getSubject().toLowerCase().contains(courseSubject.toLowerCase()) && course.getPercentAudited() >= percentAudited
+                    && course.getTotalHours() <= totalCourseHours) {
+                courseList.add(course.getTitle());
+            }
+        }
+        List<String> newCourseList= new ArrayList<>(courseList.stream().distinct().toList());
+        Collections.sort(newCourseList);
+        return newCourseList;
     }
 
     //6
     public List<String> recommendCourses(int age, int gender, int isBachelorOrHigher) {
-        return null;
+        List<String>recommendCoursesList = new ArrayList<>();
+        Map<String, Double> averageMedianAge = courses.stream().collect(Collectors.groupingBy(Course::getNumber, Collectors.averagingDouble(Course::getMedianAge)));
+        Map<String, Double> avgMale = courses.stream().collect(Collectors.groupingBy(Course::getNumber,Collectors.averagingDouble(Course::getPercentMale)));
+        Map<String, Double> avgDegree = courses.stream().collect(Collectors.groupingBy(Course::getNumber,Collectors.averagingDouble(Course::getPercentDegree)));
+        for(Course course:courses){
+            double similarityValue = Math.pow(age-averageMedianAge.get(course.getNumber()) ,2) + Math.pow((100 * gender - avgMale.get(course.getNumber())),2)
+                    + Math.pow((100 * isBachelorOrHigher - avgDegree.get(course.getNumber())),2);
+            course.setSimilarity(similarityValue);
+        }
+//        courses.sort(Comparator.comparing(Course::getSimilarity));
+        List<Course> sortedCourse = courses.stream()
+                .collect(Collectors.groupingBy(Course::getNumber, Collectors.maxBy(Comparator.comparing(Course::getLaunchDate))))
+                .values()
+                .stream()
+                .map(Optional::get)
+                .sorted(Comparator.comparing(Course::getSimilarity).thenComparing(Course::getTitle)).toList();
+        for(Course course: sortedCourse){
+            if(recommendCoursesList.size()==10){
+                break;
+            }
+            if(!recommendCoursesList.contains(course.getTitle())){
+                recommendCoursesList.add(course.getTitle());
+            }
+        }
+        return recommendCoursesList;
     }
 
 }
@@ -148,6 +190,16 @@ class Course {
     double percentMale;
     double percentFemale;
     double percentDegree;
+
+    public double getSimilarity() {
+        return similarity;
+    }
+
+    public void setSimilarity(double similarity) {
+        this.similarity = similarity;
+    }
+
+    double similarity;
 
     public Course(String institution, String number, Date launchDate,
                   String title, String instructors, String subject,
