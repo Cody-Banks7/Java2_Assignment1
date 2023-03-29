@@ -69,12 +69,12 @@ public class OnlineCoursesAnalyzer {
             String courseName = course.getTitle();
             String names = course.getInstructors();
             List<String> instructorList = new ArrayList<>(List.of(names.split(", ")));
-            if(instructorList.size()==1){
+            if(instructorList.size() == 1){
                 List<List<String>> currentCourse = map.getOrDefault(instructorList.get(0), new ArrayList<>());
-                if(currentCourse.size()==0) {
+                if(currentCourse.size() == 0) {
                     currentCourse.add(new ArrayList<>());
                     currentCourse.add(new ArrayList<>());
-                }else if(currentCourse.size()==1){
+                }else if(currentCourse.size() == 1){
                     currentCourse.add(new ArrayList<>());
                 }
                 currentCourse.get(0).add(courseName);
@@ -84,10 +84,10 @@ public class OnlineCoursesAnalyzer {
             }else{
                 for(String coInstructor:instructorList){
                     List<List<String>> currentCourse = map.getOrDefault(coInstructor, new ArrayList<>());
-                    if(currentCourse.size()==0) {
+                    if(currentCourse.size() == 0) {
                         currentCourse.add(new ArrayList<>());
                         currentCourse.add(new ArrayList<>());
-                    }else if(currentCourse.size()==1){
+                    }else if(currentCourse.size() == 1){
                         currentCourse.add(new ArrayList<>());
                     }
                     currentCourse.get(1).add(courseName);
@@ -113,7 +113,7 @@ public class OnlineCoursesAnalyzer {
         for(Course course:courseList){
             if(!topKCourses.contains(course.getTitle())){
                 topKCourses.add(course.getTitle());
-                if(topKCourses.size()==topK){
+                if(topKCourses.size() == topK){
                     break;
                 }
             }
@@ -154,7 +154,7 @@ public class OnlineCoursesAnalyzer {
                 .map(Optional::get)
                 .sorted(Comparator.comparing(Course::getSimilarity).thenComparing(Course::getTitle)).toList();
         for(Course course: sortedCourse){
-            if(recommendCoursesList.size()==10){
+            if(recommendCoursesList.size() == 10){
                 break;
             }
             if(!recommendCoursesList.contains(course.getTitle())){
